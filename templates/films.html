@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>What To Watch</title>
+{% endblock %}
+
+{% block body %}
+<div class="container col-md-6 justify-content-center">
+    {% if filtered_films|length == 0 %}
+    <h4>Uh-Oh! Nothing Matches Those Filters! </h4>
+
+    {% else %}
+
+    <h4>You Have {{ pagination.total }} Possible Film(s) To Watch! </h4>
+    
+
+    <p>Click The Poster To Learn More</p>
+    {% endif %}
+    <div class="row">
+        <div class="col-sm-6">
+            <button class="btn btn-secondary" type="button"  data-bs-toggle="modal" data-bs-target="#filtermodal" aria-expanded="false">
+                Filter
+            </button>
+            {% if isFiltered %}
+            <a class="btn btn-secondary" type="button"  href="?blank"aria-expanded="false">
+                Remove Filters
+            </a>
+            {% endif %}
+        </div>
+        <div class="col-sm-6">
+            <div class="dropdown ">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-auto-close="outside" data-bs-toggle="dropdown" aria-expanded="false">
+                  Sort
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton2">
+                    <li><a class="dropdown-item" href="?sorting_option=year_latest&filtered={{ isFiltered }}">Year Latest</a></li>
+                    <li><a class="dropdown-item" href="?sorting_option=year_earliest&filtered={{ isFiltered }}">Year Earliest</a></li>
+                    <li><a class="dropdown-item" href="?sorting_option=rating_highest&filtered={{ isFiltered }}">Rating Highest</a></li>
+                    <li><a class="dropdown-item" href="?sorting_option=rating_lowest&filtered={{ isFiltered }}">Rating Lowest</a></li>
+                    <li><a class="dropdown-item" href="?sorting_option=longest&filtered={{ isFiltered }}">Longest</a></li>
+                    <li><a class="dropdown-item" href="?sorting_option=shortest&filtered={{ isFiltered }}">Shortest</a></li>
+                </ul>
+              </div>
+        </div>
+    </div>
+    <div id="movie_table" class="justify-content-center text-center" style="display: flex; flex-wrap: wrap;">
+        {% for film in filtered_films %}
+        <div class="m-2">
+
+
+            {% if film.details.image_url %}
+            <a type="button"  data-bs-toggle="modal" data-bs-target="#dataModal{{film.id}}"><img style="max-height: 200px;" src="https://image.tmdb.org/t/p/original/{{ film.details.image_url }}"></a>
+
+            {% else %}
+            <a type="button"  data-bs-toggle="modal" data-bs-target="#dataModal{{film.id}}"><img style="height: 200px; width: 133.33px;" src="../static/imgs/no_poster.jpg"></a>
+
+            {% endif %}
+       
+            <p>{{ film.details.rating }}★</p>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center">
+        <ul class="pagination pagination-sm justify-content-center">
+            {{ pagination.links }}
+        </ul>
+        {{ pagination.info }}
+    
+      </div>
+</div> 
+
+{% for film in filtered_films %}
+<div class="modal fade" id="dataModal{{film.id}}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content" style="color: black; background-image: url('https://image.tmdb.org/t/p/original{{ film.details.still_img }}'); background-size: cover; background-position: center;">
+        <div class="modal-header" style="background-color: rgba(255, 255, 255, 0.5); font-weight: bolder;">
+            <div class="d-flex flex-column">
+                {% if film.year_released %}
+                    <h3 class="text-start" style="color: black;">{{ film.title }} ({{ film.year_released }})</h3>
+                {% else %}
+                    <h3 class="text-start" style="color: black;">{{ film.title }} (No Release Date)</h3>
+                {% endif %}
+                <h5 class="text-start" style="color: black;">
+                    Dir.
+                    {% set director_count = 0 %}
+                    {% for crew_member in film.details.crew %}
+                        {% if crew_member.job == 'Director' %}
+                            {% if director_count > 0 %}, {% endif %}
+                            {{ crew_member.name }}
+                            {% set director_count = director_count + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                </h5>
+            </div>
+            <button type="button" class="btn-close btn-sm" aria-label="Close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <div class="modal-body text-start" >
+            <div class="row">
+                <div class="col-lg-6 p-1" style="background-color: rgba(255, 255, 255, 0.5); font-weight: bolder;">
+                      <div id="providers" class="p-1 m-1">
+                        <h5>Where To Watch</h5>
+                        {% if film.details.providers['CA'] %}
+                            {% if not film.details.providers['CA']['free'] and not film.details.providers['CA']['flatrate'] %}
+                                <p>Arghh, Matey!</p>
+                                <img class="m-1" style="max-height: 100px;" src="../static/imgs/TCPirate.jpg">
+                            {% else %}
+                                {% for provider in film.details.providers['CA']['free'] %}
+                                    <div style="display: flex;">
+                                        <img class="m-1" style="max-height: 40px;" src="https://image.tmdb.org/t/p/original{{ provider['logo_path'] }}">
+                                        <p style="font-size: .5em; margin-top: auto">{{ provider['provider_name'] }} (It's Free)</p>
+                                    </div>
+                                {% endfor %}
+                                {% for provider in film.details.providers['CA']['flatrate'] %}
+                                    <div style="display: flex;">
+                                        <img class="m-1" style="max-height: 40px;" src="https://image.tmdb.org/t/p/original{{ provider['logo_path'] }}">
+                                        <p style="font-size: .5em; margin-top: auto">{{ provider['provider_name'] }}</p>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                        <p>Arghh, Matey!</p>
+                        <img class="m-1" style="max-height: 100px;" src="../static/imgs/TCPirate.jpg">
+                        {% endif %}
+                        <div style="display: flex; align-items: baseline;">
+                            <p style="margin-right: 5px;">Powered</p>
+                            <p style="margin-right: 5px;">By</p>
+                            <a style="display:flex; font-size: 11px; font-family: sans-serif; color: black; text-decoration: none; align-items:center;" target="_blank" data-original="https://www.justwatch.com" href="https://www.justwatch.com/ca/movie/{{ film.letterboxd_uri.split('/film/')[1] }}">
+                                <img alt="JustWatch" height="11px" src="https://widget.justwatch.com/assets/JW_logo_color_10px.svg" style="filter: brightness(0%) saturate(100%) invert(0%) sepia(0%) hue-rotate(0deg) brightness(0%) contrast(100%);">
+                            </a>                        
+                        </div>
+                        <a type="button" class="btn btn-dark" target=”_blank” href="{{ film.letterboxd_uri }}">To Letterboxd</a>
+                    </div>
+                             
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endfor %}
+
+  <div class="modal fade" style="color: black;" id="filtermodal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="ulfilter" class="modal-body text-center justify-content-center" style="font-size: 0.6em; display: flex; flex-wrap: wrap;">
+                {% set unique_providers = [] %}
+                {% for film in data %}
+                    {% if film.details.providers['CA'] %}
+                        {% for state in film.details.providers['CA'] %}
+                            {% for provider in film.details.providers['CA']['free'] %}
+                                {% if provider not in unique_providers %}
+                                    <div >
+                                        <input type="checkbox" value="provider_{{ provider['provider_id'] }}"/>
+                                        <img class="m-1" style="max-height: 20px;" src="https://image.tmdb.org/t/p/original{{ provider['logo_path'] }}">
+                                        <label>{{ provider['provider_name'] }}</label>
+                                    </div>
+                                    {% set _ = unique_providers.append(provider) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% for provider in film.details.providers['CA']['flatrate'] %}
+                                {% if provider not in unique_providers %}
+                                    <div>
+                                        <input type="checkbox" value="provider_{{ provider['provider_id'] }}"/>
+                                        <img class="m-1" style="max-height: 20px;" src="https://image.tmdb.org/t/p/original{{ provider['logo_path'] }}">
+                                        <label>{{ provider['provider_name'] }}</label>
+                                    </div>
+                                    {% set _ = unique_providers.append(provider) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+                <hr style="width: 100%; margin: 10px 0;">
+                {% set genres_list = [
+                    "Drama", "Comedy", "Music", "TV Movie", "Horror", "War", "Crime",
+                    "Romance", "Fantasy", "Thriller", "Mystery", "Western", "History",
+                    "Adventure", "Science Fiction", "Family", "Animation", "Action",
+                    "Documentary"
+                ] %}
+                
+                <div class="m-2">
+                    {% set unique_genres = [] %}
+                    {% for film in data %}
+                        {% for genre in genres_list %}
+                            {% set genre_str = genre|string %}
+                            {% if genre not in unique_genres %}
+                                <input class="me-1" type="checkbox" value="gen_{{ genre_str }}"/>
+                                <label>{{ genre }}</label>
+                                {% set _ = unique_genres.append(genre) %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                <hr style="width: 100%; margin: 10px 0;">
+                <div class="m-2">
+                    <input class="me-1"  type="checkbox" value="run_90"/>90min or Less</a>
+                    <input class="me-1"  type="checkbox" value="run_120"/>120min or Less</a>
+                    <input class="me-1"  type="checkbox" value="run_120+"/>Over 120min</a>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="getEmBtn" type="button" aria-expanded="false">Get 'Em</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('getEmBtn').addEventListener('click', function(event) {
+      event.preventDefault(); // Prevent default link behavior
+
+      // Get all the checked checkboxes
+      const checkboxes = document.querySelectorAll('#ulfilter input[type="checkbox"]:checked');
+
+      // Construct the URL with checkbox values as query parameters
+      let url = '?';
+      checkboxes.forEach(function(checkbox, index) {
+          if (index !== 0) {
+              url += '&';
+          }
+          url += encodeURIComponent(checkbox.value) + '=true';
+      });
+
+      // Redirect to the constructed URL
+      window.location.href = url;
+  });
+</script>
+
+
+
+{% endblock %}

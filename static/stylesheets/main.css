@@ -1,0 +1,47 @@
+.loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #373737;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto; /* Center the loader */
+    margin-top: 20px; /* Add some space from the content above */
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+  }
+  
+  /* Safari */
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @font-face {
+    font-family: "Just Sans";
+    src: url('../stylesheets/fonts/JUST\ Sans\ Regular.otf');
+  }
+
+  @font-face {
+    font-family: "Dastine";
+    src: url('../stylesheets/fonts/Dastine\ Oramica-SVG.otf');
+  }
+
+  h1, h2, h3, h4{
+    font-family: 'Dastine';
+  }
+
+  body {
+    font-size: 24px; /* Adjust the font size as needed */
+    font-style: normal;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  p {
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.6em;
+  }

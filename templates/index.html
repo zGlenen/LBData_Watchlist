@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>What To Watch Home</title>
+<style>
+    
+        .loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #373737;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto; /* Center the loader */
+    margin-top: 20px; /* Add some space from the content above */
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+  }
+  
+  /* Safari */
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+    
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container col-md-6">
+    <div id="inputScreen">
+      <h1 style="font-size: 3em;">Find Your Next Favourite</h1>
+      <p class="lead">Punch in a group of Letterboxd usernames (or just your own), and I'll give you a list of movies to watch, sorted by all your streaming services. Hit all done when you're ready to get cookin'.</p>
+      <div class="input-group ">
+          <input id="usernameInput" style="border-radius: 5px;" type="text" class="form-control" placeholder="Username" aria-label="Username">
+          <button class="btn btn-outline-secondary btn-light" type="button" id="btn_username_add">Punched</button>
+      </div>
+      <span id="usernames_span" class="m-2" style="display: flex; flex-wrap: wrap;">
+
+      </span>
+      <div class="m-2">
+          <button id="usernameInputBtn" type="button" class="btn btn-light">All Done!</button>
+      </div>
+      <div class="lead">
+          <p id="usernameInError" style="color: red; font-size: 2em;"></p>
+      </div>
+    </div>
+    <div id="loadingScreen" style="display: none;">
+      <h1>I'm Workin' Here!</h1>
+      <p class="lead">Please be patient. The larger the watchlist the more work I'll have to do.</p>
+      <div id="loading" class="loader text-center" ></div>  
+    </div>   
+    </div>
+  </div> 
+
+  <script>
+    var usernames = []; // Global array to store usernames
+    function removeUser(username, buttonParent) {
+            var index = usernames.indexOf(username);
+            if (index !== -1) {
+                usernames.splice(index, 1); // Remove username from the array
+                buttonParent.remove(); // Remove the button's parent element (the whole username element) from the DOM
+            }
+        }
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        var error = "{{ error }}";
+        if (error == "username"){
+            $('#loadingScreen').hide();
+            document.getElementById('usernameInError').innerText = "One or more usernames don't exist. Please try again.";
+            clearUsernameInput();
+        }
+
+        function clearUsernameInput() {
+            var usernameInput = document.getElementById("usernameInput");
+            if (usernameInput) {
+                usernameInput.value = ""; // Clear the value
+            }
+        }
+
+        document.getElementById('usernameInputBtn').addEventListener('click', function () {
+            if (usernames.length >= 1) {
+                run()
+            }else{
+                document.getElementById('usernameInError').innerText = "Please give me at least 1 account!";
+            }
+        });
+
+        document.getElementById('usernameInput').addEventListener('keyup', function (event) {
+            if (event.key === 'Enter') {
+                var username = document.getElementById('usernameInput').value;
+                if (validateInput(username) && validateExistingUser(username)) {
+                    addUser(username);
+                    clearUsernameInput();
+                }
+            }
+        });
+
+        document.getElementById('btn_username_add').addEventListener('click', function () {
+            var username = document.getElementById('usernameInput').value;
+            if (validateInput(username) && validateExistingUser(username)) {
+                addUser(username);
+                clearUsernameInput();
+            }
+        });
+
+        function validateExistingUser(username) {
+
+            if (usernames.includes(username)){
+                document.getElementById('usernameInError').innerText = "Please, no dupes.";
+                clearUsernameInput();
+                return false;
+            }else{
+                return true
+            }
+
+        }
+
+        function validateInput(username) {
+            var regex = /^[a-zA-Z0-9_]+$/;
+
+            if (regex.test(username)) {
+                document.getElementById('usernameInError').innerText = "";
+                return true;
+            } else {
+                document.getElementById('usernameInError').innerText = "These are not the characters you're looking for.";
+                return false;
+            }
+        }
+
+        function addUser(username) {
+            usernames.push(username); // Add username to the array
+            var usernamesSpan = document.getElementById('usernames_span');
+            var usernameButton = document.createElement('div');
+            usernameButton.classList.add('username-button');
+            usernameButton.innerHTML = `
+                <div class="btn-sm btn-light m-2">
+                <span>${username}</span>
+                <button type="button" class="btn-close btn-sm" aria-label="Close" onclick="removeUser('${username}', this.parentNode)"></button>
+                </div>
+            `;
+            usernamesSpan.appendChild(usernameButton);
+        }
+
+        function run() {
+            document.getElementById('inputScreen').style.display = 'none';
+            document.getElementById('loadingScreen').style.display = 'block';
+
+            console.log(usernames)
+
+            var ajaxOptions = {
+                type: 'POST',
+                url: '/process',
+                data: { 'usernames': usernames },
+                success: function (response) {
+                    $('#loadingScreen').hide();
+                    
+                    window.location.href = '/films?blank';
+                },
+                error: function (error) {
+                    document.getElementById('inputScreen').style.display = 'block';
+                    $('#loadingScreen').hide();
+                    document.getElementById('usernameInError').innerText = "One or more usernames don't exist. Please try again.";
+                    clearUsernameInput();
+                }
+            };
+
+            $.ajax(ajaxOptions);
+        }
+
+    });
+</script>
+
+   
+{% endblock %}
